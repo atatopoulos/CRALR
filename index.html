@@ -420,6 +420,17 @@
     </select>
   </div>
 
+  <div class="row hidden" id="field-apdDistances">
+    <div class="field">
+      <label for="apdPeauEpd">Distance peau — EPD (cm)</label>
+      <input type="number" id="apdPeauEpd" inputmode="decimal" placeholder="Ex : 5" min="1" max="15" step="0.5">
+    </div>
+    <div class="field">
+      <label for="apdCatheter">Cathéter laissé à (cm)</label>
+      <input type="number" id="apdCatheter" inputmode="decimal" placeholder="Ex : 9" min="1" max="20" step="0.5">
+    </div>
+  </div>
+
   <div class="field">
     <label for="al">Anesthésique local</label>
     <select id="al" disabled>
@@ -434,7 +445,7 @@
       <input type="number" id="volume" inputmode="decimal" placeholder="—" min="0" step="0.5">
     </div>
     <div class="field">
-      <label for="heure">Heure fin injection</label>
+      <label for="heure" id="heureLabel">Heure fin injection</label>
       <div class="time-row">
         <input type="time" id="heure">
         <button type="button" class="btn-now" id="btnNow" title="Heure actuelle" aria-label="Mettre à l'heure actuelle">↻</button>
@@ -476,6 +487,10 @@ const AL_CATALOGUE = {
   'ropi_0375':{ label: 'Ropivacaïne 0,375%',    conc: 3.75,  mgKg: 3,    maxAbs: 225 },
   'ropi_0475':{ label: 'Ropivacaïne 0,475%',    conc: 4.75,  mgKg: 3,    maxAbs: 225 },
   'mepi_1':   { label: 'Mépivacaïne 1%',        conc: 10,    mgKg: 4.5,  maxAbs: 400 },
+  // Neuraxial (pas de vérif dose/poids — marqué par neuraxial: true)
+  'bupi_05_hyper': { label: 'Bupivacaïne 0,5% hyperbare (Marcaïne®)', conc: 5 },
+  'ropi_02_apd':   { label: 'Ropivacaïne 0,2%',                       conc: 2 },
+  'levo_0125':     { label: 'Lévobupivacaïne 0,125%',                 conc: 1.25 },
 };
 
 // Niveaux vertébraux
@@ -718,11 +733,12 @@ const BLOCS = {
     cotes: ['—'],
     neuraxial: true,
     niveaux: NIVEAUX_APD,
-    position: "position assise (ou décubitus latéral), dos rond",
+    position: "position assise, dos rond",
     alOptions: [
-      { label: 'Ropivacaïne 0,2% ± Sufentanil', custom: true },
-      { label: 'Ropivacaïne 0,2%', custom: true },
-      { label: 'Lévobupivacaïne 0,125% ± Sufentanil', custom: true }
+      { label: 'Aucun (dose test seule à la pose)', noAL: true },
+      { ref: 'ropi_02_apd', adjuvant: '+ Sufentanil' },
+      { ref: 'ropi_02_apd' },
+      { ref: 'levo_0125', adjuvant: '+ Sufentanil' }
     ],
     lignes: [
       "VPA réalisée, bénéfices et risques spécifiques expliqués au patient (analgésie, bloc moteur, risques de céphalées post-ponction, d'hypotension, d'échec, de lésion neurologique) — consentement éclairé recueilli. Bilan d'hémostase vérifié, absence de contre-indication.",
@@ -730,11 +746,11 @@ const BLOCS = {
       "Anesthésie locale cutanée à la Lidocaïne 1%.",
       "Ponction médiane au niveau {NIVEAU}, aiguille de Tuohy.",
       "Repérage de l'espace péridural par technique du mandrin liquide (perte de résistance au sérum physiologique).",
-      "Profondeur peau — espace péridural : ______ cm.",
-      "Montée d'un cathéter péridural multi-perforé, laissé à ______ cm dans l'espace péridural.",
+      "Profondeur peau — espace péridural : {PEAU_EPD} cm.",
+      "Montée d'un cathéter péridural multi-perforé, laissé à {CATH} cm de la peau.",
       "Test d'aspiration négatif : absence de reflux de sang, absence de reflux de LCR.",
       "Dose test : Lidocaïne 2% adrénalinée 3 mL. Absence de signe de rachianesthésie, absence de tachycardie ou HTA évocatrice d'injection intravasculaire.",
-      "Injection fractionnée de la dose d'induction selon protocole, entretien prévu par PCEA.",
+      "{LIGNE_INDUCTION_APD}",
       "Fixation du cathéter par pansement occlusif transparent.",
       "Vérification de l'extension sensitive et motrice bilatérale et symétrique.",
       "Hémodynamique stable, absence de complication immédiate.",
@@ -747,12 +763,12 @@ const BLOCS = {
     cotes: ['—'],
     neuraxial: true,
     niveaux: NIVEAUX_RACHI,
-    position: "position assise (ou décubitus latéral)",
+    position: "position assise",
     alOptions: [
-      { label: 'Bupivacaïne 0,5% hyperbare (Marcaïne®) seule', custom: true },
-      { label: 'Bupivacaïne 0,5% hyperbare + Sufentanil 2,5-5 µg', custom: true },
-      { label: 'Bupivacaïne 0,5% hyperbare + Morphine 100 µg', custom: true },
-      { label: 'Bupivacaïne 0,5% hyperbare + Sufentanil + Morphine', custom: true }
+      { ref: 'bupi_05_hyper' },
+      { ref: 'bupi_05_hyper', adjuvant: '+ Sufentanil 2,5 µg' },
+      { ref: 'bupi_05_hyper', adjuvant: '+ Morphine 100 µg' },
+      { ref: 'bupi_05_hyper', adjuvant: '+ Sufentanil 2,5 µg + Morphine 100 µg' }
     ],
     lignes: [
       "VPA réalisée, bénéfices et risques spécifiques expliqués au patient (analgésie, bloc moteur, risques de céphalées post-ponction, d'hypotension, d'échec, de lésion neurologique) — consentement éclairé recueilli. Bilan d'hémostase vérifié, absence de contre-indication.",
@@ -760,11 +776,10 @@ const BLOCS = {
       "Anesthésie locale cutanée à la Lidocaïne 1%.",
       "Ponction médiane au niveau {NIVEAU}, aiguille pointe crayon (Whitacre / Sprotte) avec introducteur.",
       "Reflux de LCR clair, libre, sans effraction vasculaire.",
-      "Injection intrathécale lente de l'anesthésique local.",
-      "Dose injectée : ______ mg (adaptée à l'indication, ex. 10-12,5 mg pour chirurgie sous-ombilicale).",
+      "Injection intrathécale lente de {DOSE_NEURAX}.",
       "Retrait de l'aiguille en monobloc, pansement sec.",
       "Installation immédiate selon baricité et niveau chirurgical souhaité.",
-      "Vérification du niveau sensitif (test au froid) symétrique et bilatéral. Niveau cible atteint : T____.",
+      "Vérification du niveau sensitif (test au froid) symétrique et bilatéral.",
       "Hémodynamique stable, absence de complication immédiate (bradycardie, hypotension, rachi totale).",
       "Surveillance SSPI standard."
     ]
@@ -784,8 +799,10 @@ const elts = {
   contexte: $('contexte'), fieldContexte: $('field-contexte'),
   bloc: $('bloc'), cote: $('cote'),
   niveau: $('niveau'), fieldNiveau: $('field-niveau'),
+  fieldApdDistances: $('field-apdDistances'),
+  apdPeauEpd: $('apdPeauEpd'), apdCatheter: $('apdCatheter'),
   al: $('al'), doseCheck: $('doseCheck'),
-  volume: $('volume'), heure: $('heure'), btnNow: $('btnNow'),
+  volume: $('volume'), heure: $('heure'), heureLabel: $('heureLabel'), btnNow: $('btnNow'),
   btnPhoto: $('btnPhoto'), photoInput: $('photoInput'),
   photoPreview: $('photoPreview'), photoThumb: $('photoThumb'),
   btnRemovePhoto: $('btnRemovePhoto'), photoBtnLabel: $('photoBtnLabel'),
@@ -899,6 +916,8 @@ elts.bloc.addEventListener('change', onBlocChange);
 elts.btnPhoto.addEventListener('click', () => elts.photoInput.click());
 elts.photoInput.addEventListener('change', handlePhoto);
 elts.btnRemovePhoto.addEventListener('click', removePhoto);
+elts.apdPeauEpd.addEventListener('input', updateAll);
+elts.apdCatheter.addEventListener('input', updateAll);
 elts.cote.addEventListener('change', updateAll);
 elts.niveau.addEventListener('change', updateAll);
 elts.al.addEventListener('change', onALChange);
@@ -920,12 +939,14 @@ function onBlocChange() {
   }
   const b = BLOCS[key];
 
-  // Contexte caché pour neuraxial
+  // Contexte caché pour neuraxial + label heure adapté
   if (b.neuraxial) {
     elts.fieldContexte.classList.add('hidden');
     elts.contexte.value = 'sspi';
+    elts.heureLabel.textContent = 'Heure de pose';
   } else {
     elts.fieldContexte.classList.remove('hidden');
+    elts.heureLabel.textContent = 'Heure fin injection';
   }
 
   // Côtés
@@ -952,12 +973,29 @@ function onBlocChange() {
     elts.niveau.value = '';
   }
 
+  // Champs spécifiques APD
+  if (key === 'apd') {
+    elts.fieldApdDistances.classList.remove('hidden');
+  } else {
+    elts.fieldApdDistances.classList.add('hidden');
+    elts.apdPeauEpd.value = '';
+    elts.apdCatheter.value = '';
+  }
+
   // AL
   elts.al.innerHTML = '<option value="">— Sélectionner —</option>';
   b.alOptions.forEach((a, i) => {
     const o = document.createElement('option');
     o.value = i;
-    o.textContent = a.custom ? a.label : `${AL_CATALOGUE[a.ref].label} — ${a.vol} mL${b.cotes[0] === 'Bilatéral' || elts.cote.value === 'Bilatéral' ? ' / côté' : ''}`;
+    if (a.noAL) {
+      o.textContent = a.label;
+    } else if (a.custom) {
+      o.textContent = a.label;
+    } else if (b.neuraxial) {
+      o.textContent = AL_CATALOGUE[a.ref].label + (a.adjuvant ? ' ' + a.adjuvant : '');
+    } else {
+      o.textContent = `${AL_CATALOGUE[a.ref].label} — ${a.vol} mL${b.cotes[0] === 'Bilatéral' || elts.cote.value === 'Bilatéral' ? ' / côté' : ''}`;
+    }
     elts.al.appendChild(o);
   });
   elts.al.disabled = false;
@@ -1121,23 +1159,37 @@ function buildCR() {
   }
 
   // Lignes avec remplacement {NIVEAU} + précaution post-ALR en fin
+  const apdPeauEpd = elts.apdPeauEpd.value || '______';
+  const apdCatheter = elts.apdCatheter.value || '______';
+
   const lignes = [ligneContexte].concat(
-    b.lignes.map(l => niveau ? l.replace('{NIVEAU}', niveau) : l)
+    b.lignes.map(l => {
+      let out = l;
+      if (niveau) out = out.replace('{NIVEAU}', niveau);
+      out = out.replace('{PEAU_EPD}', apdPeauEpd);
+      out = out.replace('{CATH}', apdCatheter);
+      out = out.replace('{DOSE_NEURAX}', doseNeurax);
+      if (ligneInductionApd) out = out.replace('{LIGNE_INDUCTION_APD}', ligneInductionApd);
+      return out;
+    })
   );
   if (PRECAUTIONS[key]) lignes.push(PRECAUTIONS[key]);
 
   // AL (label formaté)
   let alLabel;
-  if (opt.custom) {
+  if (opt.noAL) {
+    alLabel = 'Aucun (dose test seule)';
+  } else if (opt.custom) {
     alLabel = opt.label;
+  } else if (b.neuraxial) {
+    alLabel = AL_CATALOGUE[opt.ref].label + (opt.adjuvant ? ' ' + opt.adjuvant : '');
   } else {
-    const al = AL_CATALOGUE[opt.ref];
-    alLabel = al.label;
+    alLabel = AL_CATALOGUE[opt.ref].label;
   }
 
   // Dose calculée (sur poids maigre si IMC>30)
   let doseTxt = '';
-  if (!opt.custom && !b.neuraxial) {
+  if (!opt.custom && !opt.noAL && !b.neuraxial) {
     const al = AL_CATALOGUE[opt.ref];
     const mult = cote === 'Bilatéral' ? 2 : 1;
     const dose = parseFloat(vol) * al.conc * mult;
@@ -1152,13 +1204,34 @@ function buildCR() {
     }
   }
 
+  // Dose neuraxiale : construction texte "X mL (Y mg) de <AL> [+ adjuvant]"
+  let doseNeurax = '__ mL';
+  if (b.neuraxial && !opt.custom && !opt.noAL && vol && parseFloat(vol) > 0) {
+    const al = AL_CATALOGUE[opt.ref];
+    const volNum = parseFloat(vol);
+    const mg = volNum * al.conc;
+    const mgFmt = (Math.round(mg * 2) / 2).toString().replace('.', ',');
+    doseNeurax = `${vol} mL (soit ${mgFmt} mg) de ${al.label}${opt.adjuvant ? ' ' + opt.adjuvant : ''}`;
+  }
+
+  // Ligne APD induction : soit injection AL, soit dose test seule
+  let ligneInductionApd;
+  if (key === 'apd') {
+    if (opt.noAL) {
+      ligneInductionApd = "Absence d'injection complémentaire à la pose, entretien prévu selon protocole.";
+    } else {
+      ligneInductionApd = `Injection fractionnée de la dose d'induction : ${doseNeurax}.`;
+    }
+  }
+
   const titreBloc = b.nom + (cote !== '—' ? ' — ' + cote.toUpperCase() : '');
 
   return {
     titre: titreBloc, patientId, poids, taille, sexeLabel, imc,
     isObese, poidsMaigre,
     lignes, alLabel, volume: vol, heure, doseTxt,
-    nom: b.nom, cote, niveau, neuraxial: b.neuraxial
+    nom: b.nom, cote, niveau, neuraxial: b.neuraxial,
+    noAL: opt.noAL === true
   };
 }
 
@@ -1257,7 +1330,9 @@ async function generatePDF() {
   doc.setFont('helvetica', 'normal'); doc.setTextColor(20); doc.setFontSize(9);
   doc.text('AL : ' + cr.alLabel, margin + 30, y + 5);
   if (cr.neuraxial) {
-    doc.text('Heure fin : ' + cr.heure, margin + 3, y + 11);
+    const volTxt = cr.noAL ? '—' : cr.volume + ' mL';
+    doc.text('Volume : ' + volTxt, margin + 3, y + 11);
+    doc.text('Heure de pose : ' + cr.heure, margin + 95, y + 11);
   } else {
     doc.text('Volume total : ' + cr.volume + ' mL', margin + 3, y + 11);
     doc.text('Heure fin : ' + cr.heure, margin + 95, y + 11);
@@ -1367,11 +1442,14 @@ function copyText() {
   cr.lignes.forEach(l => { t += `- ${l}\n`; });
   t += `\nINJECTION\n`;
   t += `Anesthésique : ${cr.alLabel}\n`;
-  if (!cr.neuraxial) {
-    t += `Volume total : ${cr.volume} mL\n`;
+  if (cr.neuraxial) {
+    if (!cr.noAL) t += `Volume : ${cr.volume} mL\n`;
+    t += `Heure de pose : ${cr.heure}\n`;
+  } else {
+    t += `Volume : ${cr.volume} mL\n`;
     if (cr.doseTxt) t += `${cr.doseTxt}\n`;
+    t += `Heure de fin : ${cr.heure}\n`;
   }
-  t += `Heure de fin : ${cr.heure}\n`;
   t += `\nDr TATOPOULOS — Anesthésie Réanimation\n`;
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
