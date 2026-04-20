@@ -1162,20 +1162,7 @@ function buildCR() {
   const apdPeauEpd = elts.apdPeauEpd.value || '______';
   const apdCatheter = elts.apdCatheter.value || '______';
 
-  const lignes = [ligneContexte].concat(
-    b.lignes.map(l => {
-      let out = l;
-      if (niveau) out = out.replace('{NIVEAU}', niveau);
-      out = out.replace('{PEAU_EPD}', apdPeauEpd);
-      out = out.replace('{CATH}', apdCatheter);
-      out = out.replace('{DOSE_NEURAX}', doseNeurax);
-      if (ligneInductionApd) out = out.replace('{LIGNE_INDUCTION_APD}', ligneInductionApd);
-      return out;
-    })
-  );
-  if (PRECAUTIONS[key]) lignes.push(PRECAUTIONS[key]);
-
-  // AL (label formaté)
+  // AL (label formaté) — doit être calculé avant lignes car utilisé dans doseNeurax
   let alLabel;
   if (opt.noAL) {
     alLabel = 'Aucun (dose test seule)';
@@ -1185,23 +1172,6 @@ function buildCR() {
     alLabel = AL_CATALOGUE[opt.ref].label + (opt.adjuvant ? ' ' + opt.adjuvant : '');
   } else {
     alLabel = AL_CATALOGUE[opt.ref].label;
-  }
-
-  // Dose calculée (sur poids maigre si IMC>30)
-  let doseTxt = '';
-  if (!opt.custom && !opt.noAL && !b.neuraxial) {
-    const al = AL_CATALOGUE[opt.ref];
-    const mult = cote === 'Bilatéral' ? 2 : 1;
-    const dose = parseFloat(vol) * al.conc * mult;
-    if (!isNaN(dose)) {
-      doseTxt = `Dose totale : ${dose.toFixed(0)} mg${mult === 2 ? ' (bilatéral)' : ''}`;
-      const poidsCalc = (isObese && poidsMaigre) ? parseFloat(poidsMaigre) : parseFloat(poids);
-      if (poidsCalc > 0) {
-        const maxE = Math.min(poidsCalc * al.mgKg, al.maxAbs);
-        const poidsLabel = isObese ? `${poidsCalc} kg (maigre)` : `${poidsCalc} kg`;
-        doseTxt += ` (max pour ${poidsLabel} : ${maxE.toFixed(0)} mg).`;
-      } else doseTxt += '.';
-    }
   }
 
   // Dose neuraxiale : construction texte "X mL (Y mg) de <AL> [+ adjuvant]"
@@ -1221,6 +1191,36 @@ function buildCR() {
       ligneInductionApd = "Absence d'injection complémentaire à la pose, entretien prévu selon protocole.";
     } else {
       ligneInductionApd = `Injection fractionnée de la dose d'induction : ${doseNeurax}.`;
+    }
+  }
+
+  const lignes = [ligneContexte].concat(
+    b.lignes.map(l => {
+      let out = l;
+      if (niveau) out = out.replace('{NIVEAU}', niveau);
+      out = out.replace('{PEAU_EPD}', apdPeauEpd);
+      out = out.replace('{CATH}', apdCatheter);
+      out = out.replace('{DOSE_NEURAX}', doseNeurax);
+      if (ligneInductionApd) out = out.replace('{LIGNE_INDUCTION_APD}', ligneInductionApd);
+      return out;
+    })
+  );
+  if (PRECAUTIONS[key]) lignes.push(PRECAUTIONS[key]);
+
+  // Dose calculée (sur poids maigre si IMC>30)
+  let doseTxt = '';
+  if (!opt.custom && !opt.noAL && !b.neuraxial) {
+    const al = AL_CATALOGUE[opt.ref];
+    const mult = cote === 'Bilatéral' ? 2 : 1;
+    const dose = parseFloat(vol) * al.conc * mult;
+    if (!isNaN(dose)) {
+      doseTxt = `Dose totale : ${dose.toFixed(0)} mg${mult === 2 ? ' (bilatéral)' : ''}`;
+      const poidsCalc = (isObese && poidsMaigre) ? parseFloat(poidsMaigre) : parseFloat(poids);
+      if (poidsCalc > 0) {
+        const maxE = Math.min(poidsCalc * al.mgKg, al.maxAbs);
+        const poidsLabel = isObese ? `${poidsCalc} kg (maigre)` : `${poidsCalc} kg`;
+        doseTxt += ` (max pour ${poidsLabel} : ${maxE.toFixed(0)} mg).`;
+      } else doseTxt += '.';
     }
   }
 
